@@ -1,37 +1,43 @@
+# ========== 前端 HTML（内联，方便单文件部署） ==========
+HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8"/>
-    <title>智能家居控制台</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.min.js"></script>
+    <meta charset="utf-8">
+    <title>智能家居中控</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial; padding: 20px; text-align: center; }
+        .data { margin: 10px; font-size: 1.2em; }
+        button { margin: 8px; padding: 10px 20px; font-size: 1em; }
+    </style>
 </head>
 <body>
     <h2>🏠 智能家居中控</h2>
-    <div>温度：<span id="temp">--</span> ℃ | 湿度：<span id="hum">--</span> %</div>
-    <div>人体：<span id="human">--</span> | 报警：<span id="alarm">--</span></div>
-    <div>LED：<span id="led">--</span> | 模式：<span id="mode">--</span></div>
-    <button onclick="control({light:1})">开灯</button>
-    <button onclick="control({light:0})">关灯</button>
-    <button onclick="control({mode:'quiet'})">安静模式</button>
-    <button onclick="control({mode:'normal'})">正常模式</button>
-
+    <div class="data"><b>温度：<span id="temp">--</span> ℃  |  湿度：<span id="hum">--</span> %</b></div>
+    <div class="data"><b>人体：<span id="human">--</span>  |  报警：<span id="alarm">--</span></b></div>
+    <div class="data"><b>LED：<span id="led">--</span>  |  模式：<span id="mode">--</span></b></div>
+    <button onclick="control('light_on')">开灯</button>
+    <button onclick="control('light_off')">关灯</button>
+    <button onclick="control('mode_quiet')">安静模式</button>
+    <button onclick="control('mode_normal')">正常模式</button>
     <script>
-        const socket = io();
-        socket.on('state_update', function(data){
-            document.getElementById('temp').innerText = data.temperature.toFixed(1);
-            document.getElementById('hum').innerText = data.humidity.toFixed(1);
-            document.getElementById('human').innerText = data.humanDetect ? '有人' : '没人';
-            document.getElementById('alarm').innerText = data.alarm ? '报警中' : '无';
+        var socket = io();
+        socket.on('sensor_update', function(data) {
+            document.getElementById('temp').innerText = data.temperature;
+            document.getElementById('hum').innerText = data.humidity;
+            document.getElementById('human').innerText = data.humanDetect ? '有人' : '无人';
+            document.getElementById('alarm').innerText = data.alarm ? '报警中' : '正常';
             document.getElementById('led').innerText = data.light ? '开' : '关';
-            document.getElementById('mode').innerText = data.mode === 'quiet' ? '安静家居' : '正常';
+            document.getElementById('mode').innerText = data.mode === 'quiet' ? '安静' : '正常';
         });
-        function control(cmd) {
-            fetch('/command', {
-                method: 'POST',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify(cmd)
-            });
+        function control(action) {
+            socket.emit(action);
         }
     </script>
 </body>
 </html>
+'''
+if __name__ == '__main__':
+    socketio.run(app, host='0.0.0.0', port=5000)
